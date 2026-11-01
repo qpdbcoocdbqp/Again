@@ -1,0 +1,11 @@
+# Environment
+.venv/
+*.pyc
+uv.lock
+
+# Downloaded assets, previews and catalog (re-creatable)
+data/
+
+# polyscope / Dear ImGui window state
+.polyscope.ini
+imgui.ini
