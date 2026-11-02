@@ -139,9 +139,6 @@ with gr.Blocks(title="SimReady Viewer") as demo:
                 level = gr.Radio(list(LEVELS), value="原始", label="減面（三角形太多、瀏覽器卡頓時調低）")
                 thumb = gr.Image(label="官方縮圖", interactive=False, height=240)
                 info = gr.Markdown()
-                with gr.Accordion("下載新資產", open=False):
-                    new_name = gr.Textbox(label="資產名稱", placeholder="例如 IV_pole_a02")
-                    download = gr.Button("下載")
             with gr.Column(scale=3):
                 viewer = gr.Model3D(label="3D 檢視", height=640, clear_color=(0.95, 0.95, 0.95, 1.0))
                 parts = gr.Dataframe(headers=["零件", "頂點", "三角形"], label="零件", interactive=False)
@@ -151,6 +148,9 @@ with gr.Blocks(title="SimReady Viewer") as demo:
             keyword = gr.Textbox(label="名稱關鍵字", placeholder="例如 pole", scale=3)
             sort = gr.Dropdown(list(SORTS), value="name", label="排序（name / 總大小 / 下載大小）", scale=2)
             reload = gr.Button("重新載入", scale=1)
+            with gr.Accordion("下載新資產", open=False):
+                new_name = gr.Textbox(label="資產名稱", placeholder="例如 IV_pole_a02")
+                download = gr.Button("下載")
         catalog_status = gr.Markdown()
         catalog = gr.Dataframe(label="assets（catalog.db）", interactive=False, max_height=700)
 
