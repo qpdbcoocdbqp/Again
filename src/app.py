@@ -1,3 +1,4 @@
+import hashlib
 import json
 from functools import lru_cache
 from pathlib import Path
@@ -34,10 +35,13 @@ def vertex_normals(v: np.ndarray, f: np.ndarray) -> np.ndarray:
     return n / (np.linalg.norm(n, axis=1, keepdims=True) + 1e-12)
 
 
-def build_glb(asset: str, level: str) -> Path:
-    """USD -> GLB, one node and one color per part."""
+def build_glb(asset: str, level: str, alphas: tuple[float, ...] = ()) -> Path:
+    """USD -> GLB, one node and one color per part. alphas: per-part opacity (empty = all opaque)."""
     res = LEVELS[level]
-    out = CACHE_DIR / asset / f"preview_{res or 'full'}.glb"
+    if all(a >= 1.0 for a in alphas):
+        alphas = ()
+    tag = f"_a{hashlib.md5(repr(alphas).encode()).hexdigest()[:8]}" if alphas else ""
+    out = CACHE_DIR / asset / f"preview_{res or 'full'}{tag}.glb"
     if out.exists():
         return out
 
@@ -52,9 +56,11 @@ def build_glb(asset: str, level: str) -> Path:
         if len(faces) == 0:
             continue
         verts = np.c_[verts[:, 0], verts[:, 2], -verts[:, 1]]  # Z-up -> glTF's Y-up
+        alpha = alphas[i] if i < len(alphas) else 1.0
         material = trimesh.visual.material.PBRMaterial(
-            baseColorFactor=[*part_color(i), 1.0],
+            baseColorFactor=[*part_color(i), alpha],
             metallicFactor=0.1, roughnessFactor=0.7, doubleSided=True,
+            alphaMode="BLEND" if alpha < 1.0 else "OPAQUE",
         )
         mesh = trimesh.Trimesh(verts, faces, vertex_normals=vertex_normals(verts, faces), process=False,
                                visual=trimesh.visual.TextureVisuals(material=material))
@@ -81,21 +87,40 @@ def asset_info(asset: str):
           f"- 零件：{len(meshes)}，三角形：{total:,}\n"
           f"- 授權：{pkg.get('license', '-')}\n"
           f"- package：`{pkg.get('package_id', '-')}`")
-    rows = [[part_name(m), len(m["vertices"]), len(m["faces"])] for m in meshes]
+    rows = [[part_name(m), len(m["vertices"]), len(m["faces"]), 1.0] for m in meshes]
     thumb = find_thumbnail(d)
     return (Image.open(thumb) if thumb else None), md, rows
 
 
 # ---------------------------------------------------------------- events
 def on_select(asset: str | None, level: str):
+    if asset and asset not in cached_assets():
+        raise gr.Error(f"Asset {asset} is not downloaded yet")
     if not asset:
         return None, None, "No assets in data/ yet. Download one from the panel at the bottom left.", []
     thumb, md, rows = asset_info(asset)
     return str(build_glb(asset, level)), thumb, md, rows
 
 
-def on_level(asset: str | None, level: str):
-    return str(build_glb(asset, level)) if asset else None
+def alphas_of(parts) -> tuple[float, ...]:
+    """Per-part opacity from the parts table's 4th column, clamped to [0, 1]."""
+    out = []
+    for v in parts.iloc[:, 3]:
+        try:
+            out.append(min(max(float(v), 0.0), 1.0))
+        except (TypeError, ValueError):
+            out.append(1.0)
+    return tuple(out)
+
+
+def on_level(asset: str | None, level: str, parts):
+    return str(build_glb(asset, level, alphas_of(parts))) if asset else None
+
+
+def on_opacity_reset(parts):
+    parts = parts.copy()
+    parts.iloc[:, 3] = 1.0
+    return parts
 
 
 def on_refresh(current: str | None):
@@ -134,14 +159,20 @@ with gr.Blocks(title="SimReady Viewer") as demo:
         with gr.Row():
             with gr.Column(scale=1, min_width=300):
                 choices = cached_assets()
-                asset = gr.Dropdown(choices, value=choices[0] if choices else None, label="已下載的資產（data/）")
+                asset = gr.Dropdown(choices, value=choices[0] if choices else None, label="已下載的資產（data/）",
+                                    allow_custom_value=True)  # choices change at runtime (downloads)
                 refresh = gr.Button("重新整理清單", size="sm")
                 level = gr.Radio(list(LEVELS), value="原始", label="減面（三角形太多、瀏覽器卡頓時調低）")
                 thumb = gr.Image(label="官方縮圖", interactive=False, height=240)
                 info = gr.Markdown()
             with gr.Column(scale=3):
                 viewer = gr.Model3D(label="3D 檢視", height=640, clear_color=(0.95, 0.95, 0.95, 1.0))
-                parts = gr.Dataframe(headers=["零件", "頂點", "三角形"], label="零件", interactive=False)
+                parts = gr.Dataframe(headers=["零件", "頂點", "三角形", "透明度"], label="零件（可編輯「透明度」：0 全透明 ~ 1 不透明）",
+                                     datatype=["str", "number", "number", "number"], interactive=True,
+                                     static_columns=[0, 1, 2])
+                with gr.Row():
+                    apply_opacity = gr.Button("套用透明度", variant="primary")
+                    reset_opacity = gr.Button("全部不透明")
 
     with gr.Tab("資料表"):
         with gr.Row():
@@ -156,10 +187,13 @@ with gr.Blocks(title="SimReady Viewer") as demo:
 
     outputs = [viewer, thumb, info, parts]
     asset.change(on_select, [asset, level], outputs)
-    level.change(on_level, [asset, level], viewer)
+    level.change(on_level, [asset, level, parts], viewer)
+    apply_opacity.click(on_level, [asset, level, parts], viewer)
+    reset_opacity.click(on_opacity_reset, parts, parts).then(on_level, [asset, level, parts], viewer)
     refresh.click(on_refresh, asset, asset)
     download.click(on_download, new_name, asset)  # updating asset triggers asset.change
-    demo.load(on_select, [asset, level], outputs)
+    # pick up assets downloaded after the server started, then render the selection
+    demo.load(on_refresh, asset, asset).then(on_select, [asset, level], outputs)
 
     catalog_inputs, catalog_outputs = [keyword, sort], [catalog, catalog_status]
     keyword.change(on_catalog, catalog_inputs, catalog_outputs)
