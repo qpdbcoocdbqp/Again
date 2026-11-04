@@ -34,13 +34,13 @@ function buildList(parts) {
     const row = document.createElement("div");
     row.className = "sv-row";
     row.dataset.i = i;
-    row.innerHTML = `<input type="checkbox" class="vis" title="顯示 / 隱藏">
+    row.innerHTML = `<input type="checkbox" class="vis" title="Show / hide">
       <span class="sw"></span><span class="nm"></span>
       <input type="range" class="al" min="0" max="100"><output></output>`;
     row.querySelector(".sw").style.background = p.color;
     const nm = row.querySelector(".nm");
     nm.textContent = p.name;
-    nm.title = `${p.name}\n頂點 ${p.verts.toLocaleString()}，三角形 ${p.tris.toLocaleString()}`;
+    nm.title = `${p.name}\nVertices ${p.verts.toLocaleString()}, triangles ${p.tris.toLocaleString()}`;
     return row;
   }));
 }
@@ -79,7 +79,7 @@ async function render() {
     await (mvLoad ??= import(d.mv));
   } catch (e) {
     mvLoad = null;
-    view.textContent = "model-viewer 載入失敗：" + e;
+    view.textContent = "model-viewer failed to load: " + e;
     return;
   }
   st.data = d;

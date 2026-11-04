@@ -14,7 +14,7 @@ from src.simready import (CACHE_DIR, bounds, decimate, download_asset, find_thum
                           part_name, root_usd)
 
 # Decimation levels: number of grid cells along the longest edge (None = original resolution)
-LEVELS = {"原始": None, "高": 400, "中": 200, "低": 100}
+LEVELS = {"Original": None, "High": 400, "Medium": 200, "Low": 100}
 
 
 def cached_assets() -> list[str]:
@@ -78,10 +78,10 @@ def asset_info(asset: str):
     pkg = json.loads(pkg_file.read_text()) if pkg_file.exists() else {}
 
     md = (f"### {asset}\n"
-          f"- 尺寸：{sx:.2f} × {sy:.2f} × {sz:.2f} m\n"
-          f"- 零件：{len(meshes)}，三角形：{total:,}\n"
-          f"- 授權：{pkg.get('license', '-')}\n"
-          f"- package：`{pkg.get('package_id', '-')}`")
+          f"- Size: {sx:.2f} x {sy:.2f} x {sz:.2f} m\n"
+          f"- Parts: {len(meshes)}, triangles: {total:,}\n"
+          f"- License: {pkg.get('license', '-')}\n"
+          f"- package: `{pkg.get('package_id', '-')}`")
     thumb = find_thumbnail(d)
     return (Image.open(thumb) if thumb else None), md
 
@@ -95,9 +95,9 @@ VIEWER_HTML = """
   <div class="sv-view"></div>
   <div class="sv-side">
     <div class="sv-bar">
-      <button data-act="solo">只看選取</button><button data-act="reset">全部還原</button>
+      <button data-act="solo">Solo selected</button><button data-act="reset">Reset all</button>
     </div>
-    <div class="sv-hint">點 3D 中的零件可選取；拖曳滑桿調透明度</div>
+    <div class="sv-hint">Click a part in 3D to select it; drag the slider to adjust opacity</div>
     <div class="sv-list"></div>
   </div>
 </div>"""
@@ -188,31 +188,31 @@ def on_catalog(keyword: str, sort: str):
 
 # ---------------------------------------------------------------- UI
 with gr.Blocks(title="SimReady Viewer") as demo:
-    gr.Markdown("# SimReady 資產檢視器")
-    with gr.Tab("檢視"):
-        gr.Markdown("左鍵旋轉、右鍵平移、滾輪縮放；右側清單可個別調整零件透明度")
+    gr.Markdown("# SimReady Asset Viewer")
+    with gr.Tab("Viewer"):
+        gr.Markdown("Left-drag to rotate, right-drag to pan, scroll to zoom; adjust each part's opacity in the list on the right")
         with gr.Row():
             with gr.Column(scale=1, min_width=300):
                 choices = cached_assets()
-                asset = gr.Dropdown(choices, value=choices[0] if choices else None, label="已下載的資產（data/）",
+                asset = gr.Dropdown(choices, value=choices[0] if choices else None, label="Downloaded assets (data/)",
                                     allow_custom_value=True)  # choices change at runtime (downloads)
-                refresh = gr.Button("重新整理清單", size="sm")
-                level = gr.Radio(list(LEVELS), value="原始", label="減面（三角形太多、瀏覽器卡頓時調低）")
-                thumb = gr.Image(label="官方縮圖", interactive=False, height=240)
+                refresh = gr.Button("Refresh list", size="sm")
+                level = gr.Radio(list(LEVELS), value="Original", label="Decimation (lower it if the browser lags from too many triangles)")
+                thumb = gr.Image(label="Official thumbnail", interactive=False, height=240)
                 info = gr.Markdown()
             with gr.Column(scale=3):
                 viewer = gr.HTML(html_template=VIEWER_HTML, css_template=VIEWER_CSS, js_on_load=VIEWER_JS)
 
-    with gr.Tab("資料表"):
+    with gr.Tab("Catalog"):
         with gr.Row():
-            keyword = gr.Textbox(label="名稱關鍵字", placeholder="例如 pole", scale=3)
-            sort = gr.Dropdown(list(SORTS), value="name", label="排序（name / 總大小 / 下載大小）", scale=2)
-            reload = gr.Button("重新載入", scale=1)
-            with gr.Accordion("下載新資產", open=False):
-                new_name = gr.Textbox(label="資產名稱", placeholder="例如 IV_pole_a02")
-                download = gr.Button("下載")
+            keyword = gr.Textbox(label="Name keyword", placeholder="e.g. pole", scale=3)
+            sort = gr.Dropdown(list(SORTS), value="name", label="Sort (name / size / download)", scale=2)
+            reload = gr.Button("Reload", scale=1)
+            with gr.Accordion("Download new asset", open=False):
+                new_name = gr.Textbox(label="Asset name", placeholder="e.g. IV_pole_a02")
+                download = gr.Button("Download")
         catalog_status = gr.Markdown()
-        catalog = gr.Dataframe(label="assets（catalog.db）", interactive=False, max_height=700)
+        catalog = gr.Dataframe(label="assets (catalog.db)", interactive=False, max_height=700)
 
     outputs = [viewer, thumb, info]
     asset.change(on_select, [asset, level], outputs)
