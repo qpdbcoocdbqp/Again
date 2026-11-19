@@ -1,0 +1,62 @@
+<div class="sdg">
+  <div class="sdg-left">
+    <h2>Recipe</h2>
+    <div class="sdg-row">
+      <label>name <input type="text" class="f-name"></label>
+      <label>seed <input type="number" class="f-seed" step="1"></label>
+    </div>
+    <div class="sdg-row">
+      <button data-act="load">Load YAML</button>
+      <button data-act="save">Save YAML</button>
+      <button data-act="reset">Reset</button>
+      <input type="file" class="f-file" accept=".yaml,.yml" hidden>
+    </div>
+    <div class="sdg-err" hidden></div>
+
+    <h3>Parts <span class="sdg-hint">click a name to select it</span></h3>
+    <div class="sdg-parts"></div>
+
+    <h3>Screen <span class="sdg-part-name"></span></h3>
+    <div class="sdg-row screen-row">
+      <select class="f-screen"></select>
+      <input type="color" class="f-screen-color" title="solid color">
+    </div>
+
+    <h3>Scene</h3>
+    <div class="sdg-grid">
+      <span>background</span>
+      <span class="sdg-row"><select class="f-bgtype"><option>solid</option><option>gradient</option></select>
+        <input type="color" class="f-bg0"><input type="color" class="f-bg1"></span>
+      <span>environment</span>
+      <select class="f-env"><option>neutral</option><option>legacy</option></select>
+      <span>exposure</span>
+      <span class="sdg-slider"><input type="range" class="f-exposure" min="0.01" max="5" step="0.01"><output></output></span>
+      <span>ground shadow</span>
+      <input type="checkbox" class="f-ground">
+    </div>
+
+    <h3>Pose (deg)</h3>
+    <div class="sdg-grid">
+      <span>yaw</span><span class="sdg-slider"><input type="range" class="f-pose" data-k="yaw" min="-360" max="360" step="1"><output></output></span>
+      <span>pitch</span><span class="sdg-slider"><input type="range" class="f-pose" data-k="pitch" min="-360" max="360" step="1"><output></output></span>
+      <span>roll</span><span class="sdg-slider"><input type="range" class="f-pose" data-k="roll" min="-360" max="360" step="1"><output></output></span>
+    </div>
+
+    <h3>Randomize <span class="sdg-hint">ranges used by "Randomize"</span></h3>
+    <div class="sdg-grid rnd"></div>
+    <div class="sdg-row">
+      <button data-act="rand" class="primary">Randomize (this seed)</button>
+      <button data-act="rand-next">Next seed</button>
+    </div>
+  </div>
+
+  <div class="sdg-right">
+    <div class="sdg-view"></div>
+    <div class="sdg-bar">
+      <span class="sdg-size"></span>
+      <label><input type="checkbox" class="f-mask"> part colors (segmentation preview)</label>
+      <button data-act="view-front">Front</button>
+      <button data-act="view-iso">Iso</button>
+    </div>
+  </div>
+</div>

@@ -10,6 +10,7 @@ dependencies = [
     "numpy",
     "pillow",
     "polyscope",
+    "pyyaml",
     "trimesh",
     "usd-core",
 ]

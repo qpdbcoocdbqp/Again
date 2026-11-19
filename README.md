@@ -63,6 +63,15 @@ python -m src.app --help       # --host, --port, --share
 
 Downloaded files live in `data/<asset>/` and are not downloaded again on repeated runs.
 
+## SDG material preview (TV_a01)
+
+```bash
+python -m app.sdg_app          # opens http://127.0.0.1:7870 (needs data/TV_a01 to be downloaded)
+python -m tests.test_sdg       # checks
+```
+
+A 3D preview where each part (GeomSubset) of the TV gets its own color / roughness / metallic, the screen shows off / solid / color bars / noise, and the scene (background, exposure, pose) is editable. "Randomize" samples all of it from the ranges in the recipe; the same seed gives the same result. Recipes load/save as YAML. No textures are used. See `plan.md`.
+
 ## Structure of each asset
 
 ```

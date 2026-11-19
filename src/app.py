@@ -1,5 +1,4 @@
 import json
-import urllib.request
 from functools import lru_cache
 from pathlib import Path
 
@@ -10,6 +9,7 @@ import trimesh
 from PIL import Image
 
 from src.catalog import DB_PATH, SORTS, query
+from src.model_viewer import MV_PATH, ensure_model_viewer
 from src.simready import (CACHE_DIR, bounds, decimate, download_asset, find_thumbnail, load_meshes, part_color,
                           part_name, root_usd)
 
@@ -87,8 +87,6 @@ def asset_info(asset: str):
 
 
 # ---------------------------------------------------------------- 3D viewer (model-viewer, served from the local cache)
-MV_URL = "https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
-MV_PATH = CACHE_DIR / "_vendor" / "model-viewer.min.js"
 VIEWER_JS = (Path(__file__).parent / "viewer.js").read_text(encoding="utf-8")
 VIEWER_HTML = """
 <div class="sv">
@@ -120,16 +118,6 @@ VIEWER_CSS = """
 .sv-row .sw { width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--border-color-primary); }
 .sv-row output { font-size: 12px; text-align: right; color: var(--body-text-color-subdued); }
 """
-
-
-def ensure_model_viewer() -> None:
-    """Download model-viewer once into data/_vendor/; later runs use the local copy."""
-    if MV_PATH.exists():
-        return
-    MV_PATH.parent.mkdir(parents=True, exist_ok=True)
-    tmp = MV_PATH.with_suffix(".tmp")
-    urllib.request.urlretrieve(MV_URL, tmp)
-    tmp.replace(MV_PATH)
 
 
 def file_url(p: Path) -> str:

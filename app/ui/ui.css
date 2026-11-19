@@ -1,0 +1,45 @@
+.sdg { display: flex; gap: 12px; align-items: flex-start; color: var(--body-text-color); }
+.sdg-left { flex: 0 0 400px; max-height: 86vh; overflow: auto; padding-right: 6px; }
+.sdg-right { flex: 1; min-width: 0; position: sticky; top: 8px; }
+.sdg h2 { margin: 0 0 6px; font-size: 18px; }
+.sdg h3 { margin: 14px 0 4px; font-size: 14px; border-bottom: 1px solid var(--border-color-primary); padding-bottom: 2px; }
+.sdg-hint { font-weight: normal; font-size: 11px; color: var(--body-text-color-subdued); margin-left: 6px; }
+.sdg-part-name { font-weight: normal; font-size: 11px; color: var(--body-text-color-subdued); }
+.sdg-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 4px 0; }
+.sdg-row label { display: flex; gap: 4px; align-items: center; font-size: 13px; }
+.sdg input[type=text], .sdg input[type=number], .sdg select {
+  background: var(--input-background-fill); color: var(--body-text-color); border: 1px solid var(--border-color-primary);
+  border-radius: 4px; padding: 2px 6px; font-size: 13px; }
+.sdg input[type=number] { width: 70px; }
+.sdg input[type=text] { width: 160px; }
+.sdg input[type=color] { width: 30px; height: 24px; padding: 0; border: 1px solid var(--border-color-primary); border-radius: 4px; background: none; }
+.sdg button { padding: 3px 10px; border: 1px solid var(--border-color-primary); border-radius: 4px; cursor: pointer;
+  background: var(--button-secondary-background-fill); color: var(--button-secondary-text-color); font-size: 13px; }
+.sdg button:hover { background: var(--button-secondary-background-fill-hover); }
+.sdg button.primary { background: var(--color-accent); color: white; border-color: var(--color-accent); }
+.sdg-err { background: color-mix(in srgb, #e53935 18%, transparent); border: 1px solid #e53935; border-radius: 4px;
+  padding: 6px 8px; font-size: 12px; margin: 6px 0; white-space: pre-wrap; }
+
+.sdg-part { display: grid; grid-template-columns: 18px 30px 1fr; gap: 2px 6px; align-items: center; padding: 4px;
+  border-radius: 4px; border: 1px solid transparent; }
+.sdg-part.sel { background: color-mix(in srgb, var(--color-accent) 22%, transparent); border-color: var(--color-accent); }
+.sdg-part .nm { font-size: 12px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sdg-part .nm small { color: var(--body-text-color-subdued); margin-left: 4px; }
+.sdg-part .sl { grid-column: 3; display: grid; grid-template-columns: 22px 1fr 34px; gap: 4px; align-items: center;
+  font-size: 11px; color: var(--body-text-color-subdued); }
+.sdg-part .sl input { width: 100%; }
+.sdg-part .sl output { text-align: right; }
+.sdg-grid { display: grid; grid-template-columns: 90px 1fr; gap: 4px 8px; align-items: center; font-size: 13px; }
+.sdg-grid.rnd { grid-template-columns: 90px 1fr; }
+.sdg-slider { display: flex; gap: 6px; align-items: center; }
+.sdg-slider input[type=range] { flex: 1; }
+.sdg-slider output { width: 42px; text-align: right; font-size: 12px; color: var(--body-text-color-subdued); }
+.sdg-grid .rng input { width: 58px; }
+.sdg-grid .rng.bad input { border-color: #e53935; }
+.sdg-grid .chk { display: flex; gap: 8px; flex-wrap: wrap; font-size: 12px; }
+
+.sdg-view { height: 620px; border-radius: 6px; overflow: hidden; }
+.sdg-view model-viewer { width: 100%; height: 100%; --poster-color: transparent; background: transparent; }
+.sdg-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 6px; font-size: 13px; }
+.sdg-bar label { display: flex; gap: 4px; align-items: center; }
+.sdg-size { font-variant-numeric: tabular-nums; color: var(--body-text-color-subdued); flex: 1; }
