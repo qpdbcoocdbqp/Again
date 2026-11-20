@@ -119,7 +119,7 @@ function buildStatic() {
     return row;
   }));
   const [x, y, z] = D.size_m;
-  $(".sdg-size").textContent = `Real size: x ${x} · y ${y} · z ${z} m  (width ${y}, height ${z}, depth ${x})`;
+  $(".sdg-size").textContent = `Real size: x ${x} · y ${y} · z ${z} m  (Z up)`;
   $(".sdg-part-name").textContent = R.screen.part ? "— " + R.screen.part : "— no screen part found";
   $(".f-screen").disabled = $(".f-screen-color").disabled = !R.screen.part;
 }
@@ -211,7 +211,9 @@ element.addEventListener("input", (e) => {
 
 async function randomize(next) {
   if (next) R.seed += 1;
-  const res = await server.randomize({ recipe: R, seed: R.seed });
+  const d = D;
+  const res = await server.randomize({ recipe: R, seed: R.seed, asset: d.asset });
+  if (d !== D) return;  // the asset was switched while waiting
   showErrors(res.errors);
   if (!res.recipe) return;
   R = res.recipe;
@@ -219,7 +221,7 @@ async function randomize(next) {
 }
 
 async function saveYaml() {
-  const res = await server.dump_yaml(R);
+  const res = await server.dump_yaml({ recipe: R, asset: D.asset });
   showErrors(res.errors);
   if (res.yaml == null) return;
   const a = document.createElement("a");
@@ -230,7 +232,9 @@ async function saveYaml() {
 }
 
 async function loadYaml(file) {
-  const res = await server.load_yaml({ text: await file.text() });
+  const d = D;
+  const res = await server.load_yaml({ text: await file.text(), asset: d.asset });
+  if (d !== D) return;
   showErrors(res.errors);
   if (!res.recipe) return;
   R = res.recipe; texCache = {};
@@ -238,6 +242,7 @@ async function loadYaml(file) {
 }
 
 element.addEventListener("change", (e) => {
+  if (e.target.classList.contains("f-asset")) { switchAsset(e.target.value); return; }
   if (e.target.classList.contains("f-file") && e.target.files[0]) { loadYaml(e.target.files[0]); e.target.value = ""; }
 });
 element.addEventListener("click", (e) => {
@@ -260,19 +265,47 @@ function onModelLoad() {
   apply();
 }
 
+// Show the payload of Python's init(): rebuild the controls and point the viewer at the asset's GLB
+// (onModelLoad then applies the recipe once the model is in).
+function show(d) {
+  D = d; R = JSON.parse(JSON.stringify(d.recipe));
+  sel = -1; mats = []; texCache = {}; applyToken++;
+  const pick = $(".f-asset");
+  pick.replaceChildren(...d.assets.map((a) => new Option(a, a)));
+  pick.value = d.asset; pick.disabled = false;
+  showErrors([]);
+  buildStatic();
+  syncControls();
+  viewer.setAttribute("src", d.src);
+}
+
+async function switchAsset(name) {
+  const pick = $(".f-asset");
+  pick.disabled = true;
+  let d;
+  try { d = await server.init(name); } catch (err) { d = { error: String(err) }; }
+  if (d.error) {  // keep showing the current asset
+    showErrors([d.error]);
+    pick.value = D.asset; pick.disabled = false;
+    return;
+  }
+  show(d);
+}
+
 async function start() {
   const view = $(".sdg-view");
   view.textContent = "loading...";
+  let first;
   try {
-    D = await server.init("TV_a01");
-    await import(D.mv);
+    first = await server.init(null);  // null: Python picks the default asset (a call without arguments arrives as [])
+    if (!first.error) await import(first.mv);
   } catch (err) {
-    view.textContent = "failed to start: " + err;
+    first = { error: String(err) };
+  }
+  if (first.error) {
+    view.textContent = "failed to start: " + first.error;
     return;
   }
-  R = JSON.parse(JSON.stringify(D.recipe));
-  buildStatic();
-  syncControls();
 
   viewer = document.createElement("model-viewer");
   viewer.setAttribute("camera-controls", "");
@@ -280,6 +313,9 @@ async function start() {
   viewer.setAttribute("shadow-softness", "0.8");
   viewer.setAttribute("interaction-prompt", "none");
   viewer.addEventListener("load", onModelLoad);
+  viewer.addEventListener("error", (e) => {  // "webglcontextlost" is also reported here but model-viewer recovers from it
+    if (e.detail?.type === "loadfailure") showErrors(["the 3D model failed to load: " + (e.detail.sourceError?.message || "unknown error")]);
+  });
   let down = null;
   viewer.addEventListener("pointerdown", (e) => (down = [e.clientX, e.clientY]));
   viewer.addEventListener("pointerup", (e) => {  // click (not drag) selects the part under the cursor
@@ -290,7 +326,7 @@ async function start() {
     else if (sel >= 0) select(sel);
   });
   view.replaceChildren(viewer);
-  viewer.setAttribute("src", D.src);
+  show(first);
 }
 
 start();
